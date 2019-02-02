@@ -1,0 +1,19 @@
+[package]
+name = "launcher"
+version = "0.1.0"
+authors = ["Nico"]
+edition = "2018"
+build = "build.rs"
+
+[build-dependencies]
+built = "0.3"
+
+[dependencies]
+application = { path = "../application" }
+config = "0.9"
+env_logger = "0.5"
+failure = "0.1"
+log = { version = "0.4", features = ["max_level_trace", "release_max_level_info"] }
+rand = "0.6"
+serde = "1.0"
+serde_derive = "1.0"

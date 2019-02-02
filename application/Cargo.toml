@@ -1,0 +1,12 @@
+[package]
+name = "application"
+version = "0.1.0"
+authors = ["Nico"]
+edition = "2018"
+
+[dependencies]
+failure = "0.1"
+graph = { path = "../graph", features = [] }
+image = { path = "../image" }
+log = "0.4"
+rand = "0.6"

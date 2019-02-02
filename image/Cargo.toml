@@ -1,0 +1,10 @@
+[package]
+name = "image"
+version = "0.1.0"
+authors = ["Nico"]
+edition = "2018"
+
+[dependencies]
+graph = { path = "../graph" }
+image = "0.20"
+imageproc = "0.17"
