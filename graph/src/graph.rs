@@ -87,7 +87,7 @@ impl<'a> Face<'a> {
         let edge = self.graph.faces[self.id].edge;
 
         successors(Some(self.graph.edge(edge)), move |p| {
-            let n = self.graph.edges[p.id ^ 1].next;
+            let n = self.graph.edges[p.id].next ^ 1;
             if edge == n {
                 None
             } else {
