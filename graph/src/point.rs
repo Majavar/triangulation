@@ -2,6 +2,25 @@ use rand::distributions::{Distribution, Standard};
 use std::ops::Deref;
 
 #[derive(Clone, Copy, Debug)]
+pub struct Vector(nalgebra::Vector2<f64>);
+
+impl Deref for Vector {
+    type Target = nalgebra::Vector2<f64>;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Vector {
+    #[inline]
+    pub fn new(x: f64, y: f64) -> Self {
+        Vector(nalgebra::Vector2::new(x, y))
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
 pub struct Point(nalgebra::Point2<f64>);
 
 impl Deref for Point {

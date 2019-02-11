@@ -1,3 +1,4 @@
+mod drawable;
 mod to_image;
 
 pub use image::*;

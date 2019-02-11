@@ -1,5 +1,6 @@
-use crate::graph::{Graph, GraphEdge, GraphFace, GraphVertex};
+use crate::graph::{GraphEdge, GraphFace, GraphVertex};
 use crate::point::Point;
+use either::{Left, Right};
 use nalgebra::distance_squared;
 
 use std::hint::unreachable_unchecked;
@@ -8,24 +9,27 @@ use std::hint::unreachable_unchecked;
 use rayon::prelude::*;
 
 #[derive(Debug)]
-pub struct Delaunator {
-    points: Vec<Point>,
+pub struct Delaunator<'a> {
+    points: &'a [Point],
 
-    edges: Vec<GraphEdge>,
-    faces: Vec<GraphFace>,
-    vertices: Vec<GraphVertex>,
+    edges: &'a mut Vec<GraphEdge>,
+    faces: &'a mut Vec<GraphFace>,
+    vertices: &'a mut Vec<GraphVertex<()>>,
 }
 
-impl Delaunator {
+impl<'a> Delaunator<'a> {
     #[inline]
-    pub fn new(points: Vec<Point>) -> Self {
-        let len = points.len() + 1;
-
+    pub fn new(
+        points: &'a [Point],
+        edges: &'a mut Vec<GraphEdge>,
+        faces: &'a mut Vec<GraphFace>,
+        vertices: &'a mut Vec<GraphVertex<()>>,
+    ) -> Self {
         Delaunator {
             points,
-            edges: Vec::with_capacity(len * 6),
-            faces: Vec::with_capacity(len * 2),
-            vertices: Vec::with_capacity(len),
+            edges,
+            faces,
+            vertices,
         }
     }
 
@@ -227,10 +231,10 @@ impl Delaunator {
 
     #[inline]
     fn add_seed_triangle(&mut self, v0: usize, v1: usize, v2: usize) {
-        self.vertices.push(GraphVertex::new(3, None));
-        self.vertices.push(GraphVertex::new(0, Some(v2)));
-        self.vertices.push(GraphVertex::new(7, Some(v1)));
-        self.vertices.push(GraphVertex::new(1, Some(v0)));
+        self.vertices.push(GraphVertex::new(3, Right(())));
+        self.vertices.push(GraphVertex::new(0, Left(v2)));
+        self.vertices.push(GraphVertex::new(7, Left(v1)));
+        self.vertices.push(GraphVertex::new(1, Left(v0)));
 
         self.faces.push(GraphFace::new(0));
         self.faces.push(GraphFace::new(1));
@@ -257,12 +261,14 @@ impl Delaunator {
         let mut current = initial;
         let mut current_position = self.vertices[self.edges[current].vertex]
             .position
+            .left()
             .unwrap_or_else(|| unsafe { unreachable_unchecked() });
 
         loop {
             let next = self.edges[current].next;
             let next_position = self.vertices[self.edges[next].vertex]
                 .position
+                .left()
                 .unwrap_or_else(|| unsafe { unreachable_unchecked() });
 
             if !self.is_ccw(position, current_position, next_position) {
@@ -333,15 +339,19 @@ impl Delaunator {
 
             let p0 = self.vertices[v0]
                 .position
+                .left()
                 .unwrap_or_else(|| unsafe { unreachable_unchecked() });
             let pa = self.vertices[va]
                 .position
+                .left()
                 .unwrap_or_else(|| unsafe { unreachable_unchecked() });
             let pb = self.vertices[vb]
                 .position
+                .left()
                 .unwrap_or_else(|| unsafe { unreachable_unchecked() });
             let p1 = self.vertices[v1]
                 .position
+                .left()
                 .unwrap_or_else(|| unsafe { unreachable_unchecked() });
 
             if self.in_circle(p0, pa, pb, p1) {
@@ -401,7 +411,7 @@ impl Delaunator {
 
             if let Some((edge, walk_back)) = self.find_visible_edge(new_point) {
                 let vertex = self.vertices.len();
-                self.vertices.push(GraphVertex::new(99, Some(new_point)));
+                self.vertices.push(GraphVertex::new(99, Left(new_point)));
 
                 let mut current = edge;
                 let mut current_position;
@@ -410,6 +420,7 @@ impl Delaunator {
                 let mut next_vertex = self.edges[next].vertex;
                 let mut next_position = self.vertices[next_vertex]
                     .position
+                    .left()
                     .unwrap_or_else(|| unsafe { unreachable_unchecked() });
 
                 let mut previous = self.edges[self.edges[current ^ 1].next ^ 1].next ^ 1;
@@ -427,6 +438,7 @@ impl Delaunator {
                     next_vertex = self.edges[next].vertex;
                     next_position = self.vertices[next_vertex]
                         .position
+                        .left()
                         .unwrap_or_else(|| unsafe { unreachable_unchecked() });
 
                     if self.is_ccw(new_point, current_position, next_position) {
@@ -462,11 +474,13 @@ impl Delaunator {
                     let current_vertex = self.edges[current].vertex;
                     let mut current_position = self.vertices[current_vertex]
                         .position
+                        .left()
                         .unwrap_or_else(|| unsafe { unreachable_unchecked() });
 
                     let mut previous_vertex = self.edges[previous].vertex;
                     let mut previous_position = self.vertices[previous_vertex]
                         .position
+                        .left()
                         .unwrap_or_else(|| unsafe { unreachable_unchecked() });
 
                     while !self.is_ccw(new_point, previous_position, current_position) {
@@ -500,18 +514,12 @@ impl Delaunator {
                         previous_vertex = self.edges[previous].vertex;
                         previous_position = self.vertices[previous_vertex]
                             .position
+                            .left()
                             .unwrap_or_else(|| unsafe { unreachable_unchecked() });
                     }
                 }
             }
         }
         Ok(())
-    }
-}
-
-impl Into<Graph> for Delaunator {
-    #[inline]
-    fn into(self) -> Graph {
-        crate::graph::build_from(self.points, self.edges, self.faces, self.vertices)
     }
 }

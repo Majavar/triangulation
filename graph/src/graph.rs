@@ -1,5 +1,7 @@
 use crate::Point;
-use std::iter::{successors, FromIterator};
+use either::Either;
+use std::fmt::Debug;
+use std::iter::successors;
 
 #[derive(Debug)]
 pub struct GraphEdge {
@@ -28,32 +30,32 @@ impl GraphFace {
 }
 
 #[derive(Debug)]
-pub struct GraphVertex {
+pub struct GraphVertex<T: Debug + Copy> {
     pub edge: usize,
-    pub position: Option<usize>,
+    pub position: Either<usize, T>,
 }
 
-impl GraphVertex {
+impl<T: Debug + Copy> GraphVertex<T> {
     #[inline]
-    pub fn new(edge: usize, position: Option<usize>) -> GraphVertex {
+    pub fn new(edge: usize, position: Either<usize, T>) -> GraphVertex<T> {
         GraphVertex { edge, position }
     }
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct Edge<'a> {
-    graph: &'a Graph,
+pub struct Edge<'a, T: Debug + Copy> {
+    graph: &'a Graph<T>,
     id: usize,
 }
 
-impl<'a> Edge<'a> {
+impl<'a, T: Debug + Copy> Edge<'a, T> {
     #[inline]
     pub fn id(&self) -> usize {
         self.id / 2
     }
 
     #[inline]
-    pub fn vertices(&self) -> (Vertex<'a>, Vertex<'a>) {
+    pub fn vertices(&self) -> (Vertex<'a, T>, Vertex<'a, T>) {
         let id = self.id;
 
         let left = Vertex {
@@ -71,19 +73,19 @@ impl<'a> Edge<'a> {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct Face<'a> {
-    graph: &'a Graph,
+pub struct Face<'a, T: Debug + Copy> {
+    graph: &'a Graph<T>,
     id: usize,
 }
 
-impl<'a> Face<'a> {
+impl<'a, T: Debug + Copy> Face<'a, T> {
     #[inline]
     pub fn id(&self) -> usize {
         self.id
     }
 
     #[inline]
-    pub fn edges(&self) -> impl Iterator<Item = Edge<'_>> {
+    pub fn edges(&self) -> impl Iterator<Item = Edge<'_, T>> {
         let edge = self.graph.faces[self.id].edge;
 
         successors(Some(self.graph.edge(edge)), move |p| {
@@ -97,48 +99,41 @@ impl<'a> Face<'a> {
     }
 
     #[inline]
-    pub fn vertices(&self) -> impl Iterator<Item = Vertex<'_>> {
+    pub fn vertices(&self) -> impl Iterator<Item = Vertex<'_, T>> {
         self.edges().map(|edge| edge.vertices().0)
     }
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct Vertex<'a> {
-    graph: &'a Graph,
+pub struct Vertex<'a, T: Debug + Copy> {
+    graph: &'a Graph<T>,
     id: usize,
 }
 
-impl<'a> Vertex<'a> {
+impl<'a, T: Debug + Copy> Vertex<'a, T> {
     #[inline]
     pub fn id(&self) -> usize {
         self.id
     }
 
     #[inline]
-    pub fn position(&self) -> Option<Point> {
+    pub fn position(&self) -> Either<Point, T> {
         self.graph.vertices[self.id]
             .position
-            .map(|id| self.graph.points[id])
+            .map_left(|id| self.graph.points[id])
     }
 }
 
 #[derive(Debug)]
-pub struct Graph {
-    points: Vec<Point>,
+pub struct Graph<T: Debug + Copy> {
+    pub(crate) points: Vec<Point>,
 
-    edges: Vec<GraphEdge>,
-    faces: Vec<GraphFace>,
-    vertices: Vec<GraphVertex>,
+    pub(crate) edges: Vec<GraphEdge>,
+    pub(crate) faces: Vec<GraphFace>,
+    pub(crate) vertices: Vec<GraphVertex<T>>,
 }
 
-impl Graph {
-    #[inline]
-    pub fn from(points: Vec<Point>) -> Result<Graph, ()> {
-        let mut delaunator = crate::delaunator::Delaunator::new(points);
-        delaunator.process()?;
-        Ok(delaunator.into())
-    }
-
+impl<T: Debug + Copy> Graph<T> {
     #[inline]
     pub fn edge_count(&self) -> usize {
         self.edges.len() / 2
@@ -155,55 +150,32 @@ impl Graph {
     }
 
     #[inline]
-    pub fn edge(&self, id: usize) -> Edge<'_> {
+    pub fn edge(&self, id: usize) -> Edge<'_, T> {
         Edge { graph: &self, id }
     }
 
     #[inline]
-    pub fn face(&self, id: usize) -> Face<'_> {
+    pub fn face(&self, id: usize) -> Face<'_, T> {
         Face { graph: &self, id }
     }
 
     #[inline]
-    pub fn vertex(&self, id: usize) -> Vertex<'_> {
+    pub fn vertex(&self, id: usize) -> Vertex<'_, T> {
         Vertex { graph: &self, id }
     }
 
     #[inline]
-    pub fn edges(&self) -> impl Iterator<Item = Edge<'_>> {
+    pub fn edges(&self) -> impl Iterator<Item = Edge<'_, T>> {
         (0..self.edge_count()).map(move |id| self.edge(id << 1))
     }
 
     #[inline]
-    pub fn faces(&self) -> impl Iterator<Item = Face<'_>> {
+    pub fn faces(&self) -> impl Iterator<Item = Face<'_, T>> {
         (0..self.face_count()).map(move |id| self.face(id))
     }
 
     #[inline]
-    pub fn vertices(&self) -> impl Iterator<Item = Vertex<'_>> {
+    pub fn vertices(&self) -> impl Iterator<Item = Vertex<'_, T>> {
         (0..self.vertex_count()).map(move |id| self.vertex(id))
-    }
-}
-
-impl FromIterator<Point> for Result<Graph, ()> {
-    #[inline]
-    fn from_iter<I: IntoIterator<Item = Point>>(iter: I) -> Self {
-        let points = iter.into_iter().collect::<Vec<_>>();
-        Graph::from(points)
-    }
-}
-
-#[inline]
-pub fn build_from(
-    points: Vec<Point>,
-    edges: Vec<GraphEdge>,
-    faces: Vec<GraphFace>,
-    vertices: Vec<GraphVertex>,
-) -> Graph {
-    Graph {
-        points,
-        edges,
-        faces,
-        vertices,
     }
 }

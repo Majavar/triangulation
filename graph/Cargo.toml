@@ -9,6 +9,7 @@ default = []
 use-rayon = ["rayon"]
 
 [dependencies]
+either = "1.5"
 nalgebra = "0.16"
 rand = "0.6"
 rayon = { version = "1.0", optional = true }
@@ -17,5 +18,9 @@ rayon = { version = "1.0", optional = true }
 criterion = "0.2.9"
 
 [[bench]]
-name = "bench"
+name = "delaunay"
+harness = false
+
+[[bench]]
+name = "voronoi"
 harness = false

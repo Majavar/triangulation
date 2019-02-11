@@ -2,11 +2,11 @@
 extern crate criterion;
 
 use criterion::{AxisScale, Criterion, ParameterizedBenchmark, PlotConfiguration};
-use graph::{Graph, Point};
+use graph::{Delaunay, Point};
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use std::iter::repeat_with;
 
-const COUNTS: &[usize] = &[100, 1000, 10_000, 100_000];
+const COUNTS: &[usize] = &[100, 1000, 10_000, 100_000, 1_000_000];
 
 fn bench(c: &mut Criterion) {
     let mut rng = StdRng::seed_from_u64(123456);
@@ -17,16 +17,16 @@ fn bench(c: &mut Criterion) {
         .collect();
 
     let bench = ParameterizedBenchmark::new(
-        "triangulate",
+        "delaunay",
         move |b, &&count| {
             let points = all_points[..count].to_vec();
-            b.iter(|| Graph::from(points.clone()))
+            b.iter(|| Delaunay::from(points.clone()))
         },
         COUNTS,
     );
 
     c.bench(
-        "triangulate",
+        "delaunay",
         bench
             .sample_size(20)
             .plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic)),

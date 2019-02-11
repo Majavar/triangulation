@@ -1,5 +1,5 @@
 use failure::Error;
-use graph::Graph;
+use graph::{Delaunay, Voronoi};
 use image::ToImage;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use std::iter::FromIterator;
@@ -23,18 +23,20 @@ impl Application {
         log::debug!("number: {}", self.number);
 
         let mut rng = StdRng::seed_from_u64(self.seed);
-        let graph = loop {
-            match Result::<Graph, _>::from_iter((0..self.number).map(|_| rng.gen())) {
+        let delaunay = loop {
+            match Result::<Delaunay, _>::from_iter((0..self.number).map(|_| rng.gen())) {
                 Ok(g) => break g,
                 Err(e) => log::warn!("Triangulation failed ({:?}). Trying again.", e),
             }
         };
+        let voronoi = Voronoi::from(&delaunay);
 
-        //        println!("{:?}", graph);
+        println!("{:?}", voronoi);
         log::info!("Writing to file");
         let path = Path::new("./output.png");
-        //        graph.to_image(16384, 16384).save(path)?;
-        graph.to_image(1024, 1024).save(path)?;
+        (&*delaunay, &*voronoi).to_image(1024, 1024).save(path)?;
+
+        //(&*delaunay, &*voronoi).to_image(16384, 16384).save(path)?;
 
         Ok(())
     }
