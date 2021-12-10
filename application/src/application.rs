@@ -31,7 +31,6 @@ impl Application {
         };
         let voronoi = Voronoi::from(&delaunay);
 
-        println!("{:?}", voronoi);
         log::info!("Writing to file");
         let path = Path::new("./output.png");
         (&*delaunay, &*voronoi).to_image(1024, 1024).save(path)?;

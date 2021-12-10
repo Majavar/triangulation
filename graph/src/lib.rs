@@ -1,5 +1,3 @@
-#![feature(iter_unfold)]
-
 mod delaunator;
 mod delaunay;
 mod graph;

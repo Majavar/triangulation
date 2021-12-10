@@ -9,13 +9,13 @@ default = []
 use-rayon = ["rayon"]
 
 [dependencies]
-either = "1.5"
-nalgebra = "0.16"
-rand = "0.6"
-rayon = { version = "1.0", optional = true }
+either = "1.6"
+nalgebra = "0.29"
+rand = "0.8"
+rayon = { version = "1.5", optional = true }
 
 [dev-dependencies]
-criterion = "0.2.9"
+criterion = "0.3"
 
 [[bench]]
 name = "delaunay"

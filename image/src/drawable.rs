@@ -1,7 +1,7 @@
 use crate::{Rgb, RgbImage};
 use either::{Left, Right};
 use graph::{Edge, Face, Graph, Vector, Vertex};
-use imageproc::drawing;
+use imageproc::{drawing, point};
 use std::fmt::Debug;
 
 pub trait Drawable {
@@ -89,11 +89,11 @@ impl Drawable for Face<'_, ()> {
 
         let distinct = (0..pos.len())
             .filter(|&i| i == 0 || pos[0] != pos[i])
-            .map(|i| drawing::Point::new(pos[i].0, pos[i].1))
+            .map(|i| point::Point::new(pos[i].0, pos[i].1))
             .collect::<Vec<_>>();
 
         if distinct.len() > 2 {
-            drawing::draw_convex_polygon_mut(image, distinct.as_slice(), color);
+            drawing::draw_polygon_mut(image, distinct.as_slice(), color);
         }
     }
 }

@@ -6,14 +6,14 @@ edition = "2018"
 build = "build.rs"
 
 [build-dependencies]
-built = "0.3"
+built = "0.5"
 
 [dependencies]
 application = { path = "../application" }
-config = "0.9"
-env_logger = "0.5"
+config = "0.11"
+env_logger = "0.9"
 failure = "0.1"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_info"] }
-rand = "0.6"
+rand = "0.8"
 serde = "1.0"
 serde_derive = "1.0"

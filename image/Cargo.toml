@@ -5,7 +5,7 @@ authors = ["Nico"]
 edition = "2018"
 
 [dependencies]
-either = "1.5"
+either = "1.6"
 graph = { path = "../graph" }
-image = "0.20"
-imageproc = "0.17"
+image = "0.23"
+imageproc = "0.22"
